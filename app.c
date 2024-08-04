@@ -5,6 +5,7 @@
 #define MAX_TRANSACTIONS 100
 #define MAX_DESC_LEN 100
 #define MAX_CAT_LEN 50
+#define MAX_CATEGORIES 20
 
 typedef struct {
     char date[11];
@@ -13,10 +14,30 @@ typedef struct {
     char category[MAX_CAT_LEN];
 } Transaction;
 
+typedef struct {
+    char category[MAX_CAT_LEN];
+    float budget;
+} CategoryBudget;
+
 Transaction transactions[MAX_TRANSACTIONS];
+CategoryBudget category_budgets[MAX_CATEGORIES];
 int transaction_count = 0;
+int budget_count = 0;
 
-
+void display_menu() {
+    printf("Budget Tracker\n");
+    printf("1. Add Transaction\n");
+    printf("2. Display All Transactions\n");
+    printf("3. Filter Transactions by Date\n");
+    printf("4. Filter Transactions by Category\n");
+    printf("5. Show Summary\n");
+    printf("6. Edit Transaction\n");
+    printf("7. Delete Transaction\n");
+    printf("8. Set Budget\n");
+    printf("9. Track Spending\n");
+    printf("10. Exit\n");
+    printf("Enter your choice: ");
+}
 
 void add_transaction() {
     if (transaction_count >= MAX_TRANSACTIONS) {
@@ -50,7 +71,24 @@ void display_transactions() {
     }
 }
 
+void filter_by_date() {
+    char date[11];
+    printf("Enter date to filter (YYYY-MM-DD): ");
+    scanf("%10s", date);
 
+    int found = 0;
+    for (int i = 0; i < transaction_count; ++i) {
+        if (strcmp(transactions[i].date, date) == 0) {
+            printf("Date: %s | Description: %s | Amount: $%.2f | Category: %s\n",
+                   transactions[i].date, transactions[i].description,
+                   transactions[i].amount, transactions[i].category);
+            found = 1;
+        }
+    }
+    if (!found) {
+        printf("No transactions found for the given date.\n");
+    }
+}
 
 void filter_by_category() {
     char category[MAX_CAT_LEN];
@@ -79,6 +117,29 @@ void show_summary() {
     printf("Total amount spent: $%.2f\n", total_amount);
 }
 
+void edit_transaction() {
+    int index;
+    printf("Enter the index of the transaction to edit (0-%d): ", transaction_count - 1);
+    scanf("%d", &index);
+
+    if (index < 0 || index >= transaction_count) {
+        printf("Invalid index.\n");
+        return;
+    }
+
+    printf("Editing transaction at index %d\n", index);
+    printf("Enter new date (YYYY-MM-DD): ");
+    scanf("%10s", transactions[index].date);
+    printf("Enter new description: ");
+    scanf(" %[^\n]%*c", transactions[index].description);
+    printf("Enter new amount: ");
+    scanf("%f", &transactions[index].amount);
+    printf("Enter new category: ");
+    scanf(" %[^\n]%*c", transactions[index].category);
+
+    printf("Transaction updated successfully.\n");
+}
+
 void delete_transaction() {
     int index;
     printf("Enter the index of the transaction to delete (0-%d): ", transaction_count - 1);
@@ -104,61 +165,52 @@ void delete_transaction() {
     }
 }
 
-void edit_transaction() {
-    int index;
-    printf("Enter the index of the transaction to edit (0-%d): ", transaction_count - 1);
-    scanf("%d", &index);
-
-    if (index < 0 || index >= transaction_count) {
-        printf("Invalid index.\n");
+void set_budget() {
+    if (budget_count >= MAX_CATEGORIES) {
+        printf("Budget limit reached.\n");
         return;
     }
 
-    printf("Editing transaction at index %d\n", index);
-    printf("Enter new date (YYYY-MM-DD): ");
-    scanf("%10s", transactions[index].date);
-    printf("Enter new description: ");
-    scanf(" %[^\n]%*c", transactions[index].description);
-    printf("Enter new amount: ");
-    scanf("%f", &transactions[index].amount);
-    printf("Enter new category: ");
-    scanf(" %[^\n]%*c", transactions[index].category);
+    CategoryBudget cb;
+    printf("Enter category for the budget: ");
+    scanf(" %[^\n]%*c", cb.category);
+    printf("Enter budget amount: ");
+    scanf("%f", &cb.budget);
 
-    printf("Transaction updated successfully.\n");
+    category_budgets[budget_count++] = cb;
+    printf("Budget set successfully.\n");
 }
 
+void track_spending() {
+    char category[MAX_CAT_LEN];
+    printf("Enter category to track: ");
+    scanf(" %[^\n]%*c", category);
 
-void display_menu() {
-    printf("Budget Tracker\n");
-    printf("1. Add Transaction\n");
-    printf("2. Display All Transactions\n");
-    printf("3. Filter Transactions by Date\n");
-    printf("4. Filter Transactions by Category\n");
-    printf("5. Show Summary\n");
-    printf("6. Edit Transaction\n");
-    printf("7. Delete Transaction\n");
-    printf("8. Exit\n");
-    printf("Enter your choice: ");
-}
-
-void filter_by_date() {
-    char date[11];
-    printf("Enter date to filter (YYYY-MM-DD): ");
-    scanf("%10s", date);
-
-    int found = 0;
+    float total_spent = 0;
+    float budget = 0;
     for (int i = 0; i < transaction_count; ++i) {
-        if (strcmp(transactions[i].date, date) == 0) {
-            printf("Date: %s | Description: %s | Amount: $%.2f | Category: %s\n",
-                   transactions[i].date, transactions[i].description,
-                   transactions[i].amount, transactions[i].category);
-            found = 1;
+        if (strcmp(transactions[i].category, category) == 0) {
+            total_spent += transactions[i].amount;
         }
     }
-    if (!found) {
-        printf("No transactions found for the given date.\n");
+    
+    for (int i = 0; i < budget_count; ++i) {
+        if (strcmp(category_budgets[i].category, category) == 0) {
+            budget = category_budgets[i].budget;
+            break;
+        }
+    }
+
+    printf("Total spent in category '%s': $%.2f\n", category, total_spent);
+    printf("Budget for category '%s': $%.2f\n", category, budget);
+    
+    if (total_spent > budget) {
+        printf("Warning: You have exceeded your budget!\n");
+    } else if (budget - total_spent <= 10) {
+        printf("Alert: You are nearing your budget limit!\n");
     }
 }
+
 int main() {
     int choice;
     while (1) {
@@ -187,6 +239,12 @@ int main() {
                 delete_transaction();
                 break;
             case 8:
+                set_budget();
+                break;
+            case 9:
+                track_spending();
+                break;
+            case 10:
                 printf("Exiting...\n");
                 exit(0);
             default:
