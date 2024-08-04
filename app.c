@@ -16,17 +16,7 @@ typedef struct {
 Transaction transactions[MAX_TRANSACTIONS];
 int transaction_count = 0;
 
-void display_menu() {
-    printf("Budget Tracker\n");
-    printf("1. Add Transaction\n");
-    printf("2. Display All Transactions\n");
-    printf("3. Filter Transactions by Date\n");
-    printf("4. Filter Transactions by Category\n");
-    printf("5. Show Summary\n");
-    printf("6. Edit Transaction\n");
-    printf("7. Exit\n");
-    printf("Enter your choice: ");
-}
+
 
 void add_transaction() {
     if (transaction_count >= MAX_TRANSACTIONS) {
@@ -60,24 +50,7 @@ void display_transactions() {
     }
 }
 
-void filter_by_date() {
-    char date[11];
-    printf("Enter date to filter (YYYY-MM-DD): ");
-    scanf("%10s", date);
 
-    int found = 0;
-    for (int i = 0; i < transaction_count; ++i) {
-        if (strcmp(transactions[i].date, date) == 0) {
-            printf("Date: %s | Description: %s | Amount: $%.2f | Category: %s\n",
-                   transactions[i].date, transactions[i].description,
-                   transactions[i].amount, transactions[i].category);
-            found = 1;
-        }
-    }
-    if (!found) {
-        printf("No transactions found for the given date.\n");
-    }
-}
 
 void filter_by_category() {
     char category[MAX_CAT_LEN];
@@ -106,6 +79,31 @@ void show_summary() {
     printf("Total amount spent: $%.2f\n", total_amount);
 }
 
+void delete_transaction() {
+    int index;
+    printf("Enter the index of the transaction to delete (0-%d): ", transaction_count - 1);
+    scanf("%d", &index);
+
+    if (index < 0 || index >= transaction_count) {
+        printf("Invalid index.\n");
+        return;
+    }
+
+    char confirm;
+    printf("Are you sure you want to delete the transaction at index %d? (y/n): ", index);
+    scanf(" %c", &confirm);
+
+    if (confirm == 'y' || confirm == 'Y') {
+        for (int i = index; i < transaction_count - 1; ++i) {
+            transactions[i] = transactions[i + 1];
+        }
+        transaction_count--;
+        printf("Transaction deleted successfully.\n");
+    } else {
+        printf("Deletion cancelled.\n");
+    }
+}
+
 void edit_transaction() {
     int index;
     printf("Enter the index of the transaction to edit (0-%d): ", transaction_count - 1);
@@ -129,6 +127,38 @@ void edit_transaction() {
     printf("Transaction updated successfully.\n");
 }
 
+
+void display_menu() {
+    printf("Budget Tracker\n");
+    printf("1. Add Transaction\n");
+    printf("2. Display All Transactions\n");
+    printf("3. Filter Transactions by Date\n");
+    printf("4. Filter Transactions by Category\n");
+    printf("5. Show Summary\n");
+    printf("6. Edit Transaction\n");
+    printf("7. Delete Transaction\n");
+    printf("8. Exit\n");
+    printf("Enter your choice: ");
+}
+
+void filter_by_date() {
+    char date[11];
+    printf("Enter date to filter (YYYY-MM-DD): ");
+    scanf("%10s", date);
+
+    int found = 0;
+    for (int i = 0; i < transaction_count; ++i) {
+        if (strcmp(transactions[i].date, date) == 0) {
+            printf("Date: %s | Description: %s | Amount: $%.2f | Category: %s\n",
+                   transactions[i].date, transactions[i].description,
+                   transactions[i].amount, transactions[i].category);
+            found = 1;
+        }
+    }
+    if (!found) {
+        printf("No transactions found for the given date.\n");
+    }
+}
 int main() {
     int choice;
     while (1) {
@@ -154,6 +184,9 @@ int main() {
                 edit_transaction();
                 break;
             case 7:
+                delete_transaction();
+                break;
+            case 8:
                 printf("Exiting...\n");
                 exit(0);
             default:
