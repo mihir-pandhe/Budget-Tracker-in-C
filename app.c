@@ -2,172 +2,163 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MAX_ENTRIES 100
-#define DATE_LENGTH 11
-#define CATEGORY_LENGTH 20
+#define MAX_TRANSACTIONS 100
+#define MAX_DESC_LEN 100
+#define MAX_CAT_LEN 50
 
 typedef struct {
-    char date[DATE_LENGTH];
-    char description[100];
+    char date[11];
+    char description[MAX_DESC_LEN];
     float amount;
-    char category[CATEGORY_LENGTH];
+    char category[MAX_CAT_LEN];
 } Transaction;
 
-typedef struct {
-    Transaction transactions[MAX_ENTRIES];
-    int count;
-} Budget;
+Transaction transactions[MAX_TRANSACTIONS];
+int transaction_count = 0;
 
-void addTransaction(Budget *budget, const char *date, const char *description, float amount, const char *category);
-void displayTransactions(const Budget *budget);
-void filterTransactionsByDate(const Budget *budget, const char *date);
-void filterTransactionsByCategory(const Budget *budget, const char *category);
-void displaySummary(const Budget *budget);
+void display_menu() {
+    printf("Budget Tracker\n");
+    printf("1. Add Transaction\n");
+    printf("2. Display All Transactions\n");
+    printf("3. Filter Transactions by Date\n");
+    printf("4. Filter Transactions by Category\n");
+    printf("5. Show Summary\n");
+    printf("6. Edit Transaction\n");
+    printf("7. Exit\n");
+    printf("Enter your choice: ");
+}
+
+void add_transaction() {
+    if (transaction_count >= MAX_TRANSACTIONS) {
+        printf("Transaction limit reached.\n");
+        return;
+    }
+
+    Transaction t;
+    printf("Enter transaction date (YYYY-MM-DD): ");
+    scanf("%10s", t.date);
+    printf("Enter transaction description: ");
+    scanf(" %[^\n]%*c", t.description);
+    printf("Enter transaction amount: ");
+    scanf("%f", &t.amount);
+    printf("Enter transaction category: ");
+    scanf(" %[^\n]%*c", t.category);
+
+    transactions[transaction_count++] = t;
+    printf("Transaction added successfully.\n");
+}
+
+void display_transactions() {
+    if (transaction_count == 0) {
+        printf("No transactions available.\n");
+        return;
+    }
+    for (int i = 0; i < transaction_count; ++i) {
+        printf("Date: %s | Description: %s | Amount: $%.2f | Category: %s\n",
+               transactions[i].date, transactions[i].description,
+               transactions[i].amount, transactions[i].category);
+    }
+}
+
+void filter_by_date() {
+    char date[11];
+    printf("Enter date to filter (YYYY-MM-DD): ");
+    scanf("%10s", date);
+
+    int found = 0;
+    for (int i = 0; i < transaction_count; ++i) {
+        if (strcmp(transactions[i].date, date) == 0) {
+            printf("Date: %s | Description: %s | Amount: $%.2f | Category: %s\n",
+                   transactions[i].date, transactions[i].description,
+                   transactions[i].amount, transactions[i].category);
+            found = 1;
+        }
+    }
+    if (!found) {
+        printf("No transactions found for the given date.\n");
+    }
+}
+
+void filter_by_category() {
+    char category[MAX_CAT_LEN];
+    printf("Enter category to filter: ");
+    scanf(" %[^\n]%*c", category);
+
+    int found = 0;
+    for (int i = 0; i < transaction_count; ++i) {
+        if (strcmp(transactions[i].category, category) == 0) {
+            printf("Date: %s | Description: %s | Amount: $%.2f | Category: %s\n",
+                   transactions[i].date, transactions[i].description,
+                   transactions[i].amount, transactions[i].category);
+            found = 1;
+        }
+    }
+    if (!found) {
+        printf("No transactions found for the given category.\n");
+    }
+}
+
+void show_summary() {
+    float total_amount = 0;
+    for (int i = 0; i < transaction_count; ++i) {
+        total_amount += transactions[i].amount;
+    }
+    printf("Total amount spent: $%.2f\n", total_amount);
+}
+
+void edit_transaction() {
+    int index;
+    printf("Enter the index of the transaction to edit (0-%d): ", transaction_count - 1);
+    scanf("%d", &index);
+
+    if (index < 0 || index >= transaction_count) {
+        printf("Invalid index.\n");
+        return;
+    }
+
+    printf("Editing transaction at index %d\n", index);
+    printf("Enter new date (YYYY-MM-DD): ");
+    scanf("%10s", transactions[index].date);
+    printf("Enter new description: ");
+    scanf(" %[^\n]%*c", transactions[index].description);
+    printf("Enter new amount: ");
+    scanf("%f", &transactions[index].amount);
+    printf("Enter new category: ");
+    scanf(" %[^\n]%*c", transactions[index].category);
+
+    printf("Transaction updated successfully.\n");
+}
 
 int main() {
-    Budget budget;
-    budget.count = 0;
-
     int choice;
-    char date[DATE_LENGTH];
-    char description[100];
-    char category[CATEGORY_LENGTH];
-    float amount;
-
     while (1) {
-        printf("Budget Tracker\n");
-        printf("1. Add Transaction\n");
-        printf("2. Display All Transactions\n");
-        printf("3. Filter Transactions by Date\n");
-        printf("4. Filter Transactions by Category\n");
-        printf("5. Show Summary\n");
-        printf("6. Exit\n");
-        printf("Enter your choice: ");
+        display_menu();
         scanf("%d", &choice);
-        getchar();
-
         switch (choice) {
             case 1:
-                printf("Enter transaction date (YYYY-MM-DD): ");
-                fgets(date, DATE_LENGTH, stdin);
-                date[strcspn(date, "\n")] = '\0';
-                printf("Enter transaction description: ");
-                fgets(description, sizeof(description), stdin);
-                description[strcspn(description, "\n")] = '\0';
-                printf("Enter transaction amount: ");
-                scanf("%f", &amount);
-                getchar();
-                fgets(category, CATEGORY_LENGTH, stdin);
-                category[strcspn(category, "\n")] = '\0';
-                addTransaction(&budget, date, description, amount, category);
+                add_transaction();
                 break;
-
             case 2:
-                displayTransactions(&budget);
+                display_transactions();
                 break;
-
             case 3:
-                printf("Enter date to filter by (YYYY-MM-DD): ");
-                fgets(date, DATE_LENGTH, stdin);
-                date[strcspn(date, "\n")] = '\0';
-                filterTransactionsByDate(&budget, date);
+                filter_by_date();
                 break;
-
             case 4:
-                printf("Enter category to filter by: ");
-                fgets(category, CATEGORY_LENGTH, stdin);
-                category[strcspn(category, "\n")] = '\0';
-                filterTransactionsByCategory(&budget, category);
+                filter_by_category();
                 break;
-
             case 5:
-                displaySummary(&budget);
+                show_summary();
                 break;
-
             case 6:
+                edit_transaction();
+                break;
+            case 7:
                 printf("Exiting...\n");
                 exit(0);
-
             default:
                 printf("Invalid choice. Please try again.\n");
         }
     }
-
     return 0;
-}
-
-void addTransaction(Budget *budget, const char *date, const char *description, float amount, const char *category) {
-    if (budget->count < MAX_ENTRIES) {
-        Transaction *transaction = &budget->transactions[budget->count];
-        strncpy(transaction->date, date, DATE_LENGTH - 1);
-        transaction->date[DATE_LENGTH - 1] = '\0';
-        strncpy(transaction->description, description, sizeof(transaction->description) - 1);
-        transaction->description[sizeof(transaction->description) - 1] = '\0';
-        transaction->amount = amount;
-        strncpy(transaction->category, category, CATEGORY_LENGTH - 1);
-        transaction->category[CATEGORY_LENGTH - 1] = '\0';
-        budget->count++;
-    } else {
-        printf("Error: Cannot add more transactions, budget is full.\n");
-    }
-}
-
-void displayTransactions(const Budget *budget) {
-    if (budget->count == 0) {
-        printf("No transactions found.\n");
-        return;
-    }
-
-    for (int i = 0; i < budget->count; i++) {
-        const Transaction *transaction = &budget->transactions[i];
-        printf("Date: %s | Description: %s | Amount: $%.2f | Category: %s\n",
-               transaction->date, transaction->description, transaction->amount, transaction->category);
-    }
-}
-
-void filterTransactionsByDate(const Budget *budget, const char *date) {
-    int found = 0;
-    for (int i = 0; i < budget->count; i++) {
-        const Transaction *transaction = &budget->transactions[i];
-        if (strcmp(transaction->date, date) == 0) {
-            printf("Date: %s | Description: %s | Amount: $%.2f | Category: %s\n",
-                   transaction->date, transaction->description, transaction->amount, transaction->category);
-            found = 1;
-        }
-    }
-    if (!found) {
-        printf("No transactions found for the specified date.\n");
-    }
-}
-
-void filterTransactionsByCategory(const Budget *budget, const char *category) {
-    int found = 0;
-    for (int i = 0; i < budget->count; i++) {
-        const Transaction *transaction = &budget->transactions[i];
-        if (strcmp(transaction->category, category) == 0) {
-            printf("Date: %s | Description: %s | Amount: $%.2f | Category: %s\n",
-                   transaction->date, transaction->description, transaction->amount, transaction->category);
-            found = 1;
-        }
-    }
-    if (!found) {
-        printf("No transactions found for the specified category.\n");
-    }
-}
-
-void displaySummary(const Budget *budget) {
-    float totalIncome = 0.0f;
-    float totalExpenses = 0.0f;
-    for (int i = 0; i < budget->count; i++) {
-        const Transaction *transaction = &budget->transactions[i];
-        if (transaction->amount >= 0) {
-            totalIncome += transaction->amount;
-        } else {
-            totalExpenses += transaction->amount;
-        }
-    }
-    printf("Summary:\n");
-    printf("Total Income: $%.2f\n", totalIncome);
-    printf("Total Expenses: $%.2f\n", totalExpenses);
-    printf("Net Balance: $%.2f\n", totalIncome + totalExpenses);
 }
