@@ -1,20 +1,23 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define MAX_ENTRIES 100
+#define DATE_LENGTH 11
 
 typedef struct {
+    char date[DATE_LENGTH];
     char description[100];
     float amount;
-} Entry;
+} Transaction;
 
 typedef struct {
-    Entry entries[MAX_ENTRIES];
+    Transaction transactions[MAX_ENTRIES];
     int count;
 } Budget;
 
-void addEntry(Budget *budget, const char *description, float amount);
-void displayEntries(const Budget *budget);
+void addTransaction(Budget *budget, const char *date, const char *description, float amount);
+void displayTransactions(const Budget *budget);
 float calculateTotal(const Budget *budget);
 
 int main() {
@@ -22,45 +25,43 @@ int main() {
     budget.count = 0;
 
     int choice;
+    char date[DATE_LENGTH];
     char description[100];
     float amount;
 
     while (1) {
         printf("Budget Tracker\n");
-        printf("1. Add Income\n");
-        printf("2. Add Expense\n");
-        printf("3. Display All Entries\n");
-        printf("4. Calculate Total\n");
-        printf("5. Exit\n");
+        printf("1. Add Transaction\n");
+        printf("2. Display All Transactions\n");
+        printf("3. Calculate Total\n");
+        printf("4. Exit\n");
         printf("Enter your choice: ");
         scanf("%d", &choice);
+        getchar();
 
         switch (choice) {
             case 1:
-                printf("Enter income description: ");
-                scanf(" %[^\n]s", description);
-                printf("Enter income amount: ");
+                printf("Enter transaction date (YYYY-MM-DD): ");
+                fgets(date, DATE_LENGTH, stdin);
+                date[strcspn(date, "\n")] = '\0';
+                printf("Enter transaction description: ");
+                fgets(description, sizeof(description), stdin);
+                description[strcspn(description, "\n")] = '\0';
+                printf("Enter transaction amount: ");
                 scanf("%f", &amount);
-                addEntry(&budget, description, amount);
+                getchar();
+                addTransaction(&budget, date, description, amount);
                 break;
 
             case 2:
-                printf("Enter expense description: ");
-                scanf(" %[^\n]s", description);
-                printf("Enter expense amount: ");
-                scanf("%f", &amount);
-                addEntry(&budget, description, -amount);
+                displayTransactions(&budget);
                 break;
 
             case 3:
-                displayEntries(&budget);
-                break;
-
-            case 4:
                 printf("Total Balance: $%.2f\n", calculateTotal(&budget));
                 break;
 
-            case 5:
+            case 4:
                 printf("Exiting...\n");
                 exit(0);
 
@@ -72,33 +73,36 @@ int main() {
     return 0;
 }
 
-void addEntry(Budget *budget, const char *description, float amount) {
+void addTransaction(Budget *budget, const char *date, const char *description, float amount) {
     if (budget->count < MAX_ENTRIES) {
-        Entry *entry = &budget->entries[budget->count];
-        snprintf(entry->description, sizeof(entry->description), "%s", description);
-        entry->amount = amount;
+        Transaction *transaction = &budget->transactions[budget->count];
+        strncpy(transaction->date, date, DATE_LENGTH - 1);
+        transaction->date[DATE_LENGTH - 1] = '\0'; // Ensure null termination
+        strncpy(transaction->description, description, sizeof(transaction->description) - 1);
+        transaction->description[sizeof(transaction->description) - 1] = '\0'; // Ensure null termination
+        transaction->amount = amount;
         budget->count++;
     } else {
-        printf("Error: Cannot add more entries, budget is full.\n");
+        printf("Error: Cannot add more transactions, budget is full.\n");
     }
 }
-
-void displayEntries(const Budget *budget) {
+void displayTransactions(const Budget *budget) {
     if (budget->count == 0) {
-        printf("No entries found.\n");
+        printf("No transactions found.\n");
         return;
     }
 
     for (int i = 0; i < budget->count; i++) {
-        const Entry *entry = &budget->entries[i];
-        printf("%s: $%.2f\n", entry->description, entry->amount);
+        const Transaction *transaction = &budget->transactions[i];
+        printf("Date: %s | Description: %s | Amount: $%.2f\n",
+               transaction->date, transaction->description, transaction->amount);
     }
 }
 
 float calculateTotal(const Budget *budget) {
     float total = 0.0f;
     for (int i = 0; i < budget->count; i++) {
-        total += budget->entries[i].amount;
+        total += budget->transactions[i].amount;
     }
     return total;
 }
