@@ -1,11 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #define MAX_TRANSACTIONS 100
 #define MAX_DESC_LEN 100
 #define MAX_CAT_LEN 50
 #define MAX_CATEGORIES 20
+#define MAX_REPORT_LENGTH 500
 
 typedef struct {
     char date[11];
@@ -35,7 +37,10 @@ void display_menu() {
     printf("7. Delete Transaction\n");
     printf("8. Set Budget\n");
     printf("9. Track Spending\n");
-    printf("10. Exit\n");
+    printf("10. Generate Report\n");
+    printf("11. Export Data\n");
+    printf("12. Search Transactions\n");
+    printf("13. Exit\n");
     printf("Enter your choice: ");
 }
 
@@ -211,6 +216,50 @@ void track_spending() {
     }
 }
 
+void generate_report(const char *filename, const char *period) {
+    FILE *file = fopen(filename, "w");
+    if (!file) {
+        printf("Error opening file for writing.\n");
+        return;
+    }
+
+    fprintf(file, "Report for %s\n", period);
+    fprintf(file, "Date,Description,Amount,Category\n");
+
+    for (int i = 0; i < transaction_count; ++i) {
+        fprintf(file, "%s,%s,%.2f,%s\n", transactions[i].date,
+                transactions[i].description, transactions[i].amount,
+                transactions[i].category);
+    }
+
+    fclose(file);
+    printf("Report generated successfully.\n");
+}
+
+void export_data() {
+    generate_report("transactions_report.csv", "All Transactions");
+}
+
+void search_transactions() {
+    char search_term[MAX_DESC_LEN];
+    printf("Enter search term: ");
+    scanf(" %[^\n]%*c", search_term);
+
+    int found = 0;
+    for (int i = 0; i < transaction_count; ++i) {
+        if (strstr(transactions[i].description, search_term) ||
+            strstr(transactions[i].category, search_term)) {
+            printf("Date: %s | Description: %s | Amount: $%.2f | Category: %s\n",
+                   transactions[i].date, transactions[i].description,
+                   transactions[i].amount, transactions[i].category);
+            found = 1;
+        }
+    }
+    if (!found) {
+        printf("No transactions found matching the search term.\n");
+    }
+}
+
 int main() {
     int choice;
     while (1) {
@@ -245,6 +294,15 @@ int main() {
                 track_spending();
                 break;
             case 10:
+                generate_report("monthly_report.csv", "Monthly");
+                break;
+            case 11:
+                export_data();
+                break;
+            case 12:
+                search_transactions();
+                break;
+            case 13:
                 printf("Exiting...\n");
                 exit(0);
             default:
