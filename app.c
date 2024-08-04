@@ -1,14 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 #include <ctype.h>
 
 #define MAX_TRANSACTIONS 100
 #define MAX_DESC_LEN 100
 #define MAX_CAT_LEN 50
 #define MAX_CATEGORIES 20
-#define MAX_REPORT_LENGTH 500
 
 typedef struct {
     char date[11];
@@ -27,14 +25,28 @@ CategoryBudget category_budgets[MAX_CATEGORIES];
 int transaction_count = 0;
 int budget_count = 0;
 
-    int is_valid_date(const char *date) {
-    if (strlen(date) != 10 || date[4] != '-' || date[7] != '-') return 0;
+int is_valid_date(const char *date);
+int is_valid_amount(float amount);
+void display_menu();
+void add_transaction();
+void display_transactions();
+void filter_by_date();
+void filter_by_category();
+void show_summary();
+void edit_transaction();
+void delete_transaction();
+void set_budget();
+void track_spending();
+void generate_report(const char *filename, const char *period);
+void export_data();
+void search_transactions();
 
+int is_valid_date(const char *date) {
+    if (strlen(date) != 10 || date[4] != '-' || date[7] != '-') return 0;
     for (int i = 0; i < 10; i++) {
         if (i == 4 || i == 7) continue;
         if (!isdigit(date[i])) return 0;
     }
-    
     return 1;
 }
 
@@ -267,9 +279,7 @@ void generate_report(const char *filename, const char *period) {
         return;
     }
 
-    fprintf(file, "Report for %s\n", period);
     fprintf(file, "Date,Description,Amount,Category\n");
-
     for (int i = 0; i < transaction_count; ++i) {
         fprintf(file, "%s,%s,$%.2f,%s\n",
                 transactions[i].date, transactions[i].description,
@@ -288,7 +298,6 @@ void export_data() {
     }
 
     fprintf(file, "Date,Description,Amount,Category\n");
-
     for (int i = 0; i < transaction_count; ++i) {
         fprintf(file, "%s,%s,$%.2f,%s\n",
                 transactions[i].date, transactions[i].description,
@@ -327,7 +336,7 @@ int main() {
             while (getchar() != '\n');
             continue;
         }
-        
+
         switch (choice) {
             case 1:
                 add_transaction();
